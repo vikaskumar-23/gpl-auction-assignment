@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app import auction
 from app.auction import AuctionError
 from app.db import connect, get_conn, init_schema
-from app.schemas import Auction, Bid, BidRequest, Player, StartRequest, Team
+from app.schemas import AcceptRequest, Auction, Bid, BidRequest, Player, StartRequest, Team
 from app.seed import seed_if_empty
 
 
@@ -73,3 +73,13 @@ def start_auction(body: StartRequest, conn: Conn):
 )
 def place_bid(body: BidRequest, conn: Conn):
     return auction.place_bid(conn, body.team_id, body.amount)
+
+
+@app.post("/api/auction/accept", response_model=Player, dependencies=[require_role("auctioneer")])
+def accept_bid(body: AcceptRequest, conn: Conn):
+    return auction.accept_bid(conn, body.bid_id)
+
+
+@app.post("/api/auction/reject", response_model=Player, dependencies=[require_role("auctioneer")])
+def reject_round(conn: Conn):
+    return auction.reject_round(conn)

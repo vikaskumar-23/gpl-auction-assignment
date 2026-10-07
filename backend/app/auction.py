@@ -139,3 +139,43 @@ def place_bid(conn: sqlite3.Connection, team_id: int, amount: int) -> dict:
             (player["id"], team_id, amount),
         )
         return _bids(conn, player["id"])[0]
+
+
+def accept_bid(conn: sqlite3.Connection, bid_id: int) -> dict:
+    # the auctioneer accepts the bid they saw; if a higher one came in meanwhile, refuse
+    with transaction(conn):
+        player = _require_current_player(conn)
+        bids = _bids(conn, player["id"])
+        if not bids:
+            raise AuctionError(
+                409,
+                "NO_BIDS",
+                f"No bids for {player['name']} yet. Reject the round to return them to the pool.",
+            )
+        top = bids[0]
+        if top["id"] != bid_id:
+            raise AuctionError(
+                409,
+                "BID_NOT_HIGHEST",
+                f"That is no longer the highest bid: {top['team_name']} now lead "
+                f"with {money(top['amount'])}.",
+            )
+        conn.execute(
+            "UPDATE teams SET remaining_budget = remaining_budget - ? WHERE id = ?",
+            (top["amount"], top["team_id"]),
+        )
+        conn.execute(
+            "UPDATE players SET status = 'sold', sold_price = ?, team_id = ? WHERE id = ?",
+            (top["amount"], top["team_id"], player["id"]),
+        )
+        return _player(conn, player["id"])
+
+
+def reject_round(conn: sqlite3.Connection) -> dict:
+    with transaction(conn):
+        player = _require_current_player(conn)
+        conn.execute(
+            "UPDATE bids SET voided = 1 WHERE player_id = ? AND voided = 0", (player["id"],)
+        )
+        conn.execute("UPDATE players SET status = 'available' WHERE id = ?", (player["id"],))
+        return _player(conn, player["id"])

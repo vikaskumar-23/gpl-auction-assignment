@@ -42,3 +42,7 @@ class StartRequest(BaseModel):
 class BidRequest(BaseModel):
     team_id: int
     amount: int = Field(gt=0)
+
+
+class AcceptRequest(BaseModel):
+    bid_id: int
