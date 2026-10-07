@@ -49,26 +49,7 @@ pytest
 
 - Amounts are whole **lakh** (`150` = ₹1.5 Cr).
 - Four teams, each with a budget of **₹10 Cr (1000 lakh)**: Panjim Pirates, Margao Mavericks, Vasco Vikings, Calangute Chargers.
-- 16 preloaded players:
-
-| # | Player | Skill | Base |
-|---|---|---|---|
-| 1 | Aarav Naik | batting | ₹2 Cr |
-| 2 | Kavya Dessai | bowling | ₹1.5 Cr |
-| 3 | Rohan Fernandes | both | ₹1.5 Cr |
-| 4 | Ishaan Kamat | batting | ₹1 Cr |
-| 5 | Sneha Gaonkar | bowling | ₹1 Cr |
-| 6 | Arjun Nair | both | ₹1 Cr |
-| 7 | Tanvi Prabhu | batting | ₹75 L |
-| 8 | Kabir D'Souza | bowling | ₹75 L |
-| 9 | Meera Shetye | both | ₹50 L |
-| 10 | Vivaan Sawant | batting | ₹50 L |
-| 11 | Ananya Pereira | bowling | ₹50 L |
-| 12 | Siddharth Borkar | both | ₹30 L |
-| 13 | Riya Rodrigues | batting | ₹30 L |
-| 14 | Neel Parab | bowling | ₹20 L |
-| 15 | Diya Kerkar | both | ₹20 L |
-| 16 | Aditya Menon | batting | ₹20 L |
+- 16 preloaded players with base prices from ₹20 L to ₹2 Cr ([`backend/app/seed.py`](backend/app/seed.py)).
 
 A bid is checked in this order, inside one database transaction:
 
@@ -108,27 +89,6 @@ Refused bids are not stored. The auctioneer:
 | GET | [`/api/events`](#live-updates-server-sent-events) | anyone | Live updates (SSE) |
 
 Interactive docs: `/docs`.
-
-### Response objects
-
-```jsonc
-// Player
-{ "id": 3, "name": "Rohan Fernandes", "skill": "both", "base_price": 150,
-  "status": "sold", "sold_price": 200, "team_id": 4 }
-// skill: "batting" | "bowling" | "both"; status: "available" | "in_auction" | "sold"
-// sold_price and team_id are null unless status is "sold"
-
-// Bid
-{ "id": 6, "player_id": 2, "team_id": 2, "team_name": "Margao Mavericks",
-  "amount": 175, "created_at": "2026-10-06T22:43:58.420Z" }   // created_at: UTC, ISO 8601
-
-// Team
-{ "id": 4, "name": "Calangute Chargers", "total_budget": 1000, "remaining_budget": 800,
-  "players": [ /* Player objects bought by this team, most expensive first */ ] }
-
-// Auction
-{ "player": /* Player or null */, "bids": [ /* this round's Bid objects, highest first */ ] }
-```
 
 ### GET /api/players
 
