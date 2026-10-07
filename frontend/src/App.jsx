@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import AuctionStage from './components/AuctionStage'
 import Header from './components/Header'
+import PlayerList from './components/PlayerList'
 import RolePicker from './components/RolePicker'
 import { loadSession, saveSession } from './lib/session'
 import { useLiveState } from './lib/useLiveState'
@@ -28,7 +30,17 @@ export default function App() {
   return (
     <div className="min-h-dvh">
       <Header who={who} connected={connected} onSwitch={() => choose(null)} />
-      <main className="mx-auto max-w-[1600px] px-4 py-5 sm:px-6" />
+      {/* one column on phones and tablets; board + team sheets side by side on desktop */}
+      <main className="mx-auto grid max-w-[1600px] items-start gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] lg:py-8">
+        <div className="grid min-w-0 gap-5">
+          <AuctionStage auction={state.auction} />
+          <PlayerList
+            players={state.players}
+            canStart={false}
+            auctionActive={!!state.auction.player}
+          />
+        </div>
+      </main>
     </div>
   )
 }
