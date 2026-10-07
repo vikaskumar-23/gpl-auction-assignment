@@ -2,11 +2,13 @@ import asyncio
 import sqlite3
 from collections.abc import AsyncIterable
 from contextlib import asynccontextmanager, closing
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
+from fastapi.staticfiles import StaticFiles
 
 from app import auction
 from app.auction import AuctionError
@@ -125,3 +127,9 @@ async def events() -> AsyncIterable[ServerSentEvent]:
             yield ServerSentEvent(event="ping", data=1)
         await asyncio.sleep(TICK)
         quiet += TICK
+
+
+# serve the built frontend (npm run build) from the same server
+DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if DIST.is_dir():
+    app.mount("/", StaticFiles(directory=DIST, html=True), name="web")
