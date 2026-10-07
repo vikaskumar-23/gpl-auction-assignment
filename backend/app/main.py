@@ -1,9 +1,12 @@
+import asyncio
 import sqlite3
+from collections.abc import AsyncIterable
 from contextlib import asynccontextmanager, closing
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app import auction
 from app.auction import AuctionError
@@ -22,6 +25,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GPL Auction API", lifespan=lifespan)
 Conn = Annotated[sqlite3.Connection, Depends(get_conn)]
+
+# bumped on every write; open event streams watch it (works for a single server process)
+_version = 0
+
+
+def notify() -> None:
+    global _version
+    _version += 1
 
 
 def error(status: int, code: str, message: str) -> JSONResponse:
@@ -65,21 +76,52 @@ def get_auction(conn: Conn):
 
 @app.post("/api/auction/start", response_model=Auction, dependencies=[require_role("auctioneer")])
 def start_auction(body: StartRequest, conn: Conn):
-    return auction.start_auction(conn, body.player_id)
+    result = auction.start_auction(conn, body.player_id)
+    notify()
+    return result
 
 
 @app.post(
     "/api/auction/bids", response_model=Bid, status_code=201, dependencies=[require_role("manager")]
 )
 def place_bid(body: BidRequest, conn: Conn):
-    return auction.place_bid(conn, body.team_id, body.amount)
+    result = auction.place_bid(conn, body.team_id, body.amount)
+    notify()
+    return result
 
 
 @app.post("/api/auction/accept", response_model=Player, dependencies=[require_role("auctioneer")])
 def accept_bid(body: AcceptRequest, conn: Conn):
-    return auction.accept_bid(conn, body.bid_id)
+    result = auction.accept_bid(conn, body.bid_id)
+    notify()
+    return result
 
 
 @app.post("/api/auction/reject", response_model=Player, dependencies=[require_role("auctioneer")])
 def reject_round(conn: Conn):
-    return auction.reject_round(conn)
+    result = auction.reject_round(conn)
+    notify()
+    return result
+
+
+# live updates
+
+TICK = 0.25
+PING_EVERY = 15  # seconds without changes before a ping
+
+
+@app.get("/api/events", response_class=EventSourceResponse)
+async def events() -> AsyncIterable[ServerSentEvent]:
+    seen, quiet = None, 0.0
+    while True:
+        if seen != _version:
+            seen, quiet = _version, 0.0
+            with closing(connect()) as conn:
+                state = auction.snapshot(conn)
+            yield ServerSentEvent(event="state", data=state)
+        elif quiet >= PING_EVERY:
+            # lets the browser notice a dead connection
+            quiet = 0.0
+            yield ServerSentEvent(event="ping", data=1)
+        await asyncio.sleep(TICK)
+        quiet += TICK
