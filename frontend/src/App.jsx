@@ -4,6 +4,7 @@ import AuctionStage from './components/AuctionStage'
 import BidBox from './components/BidBox'
 import Header from './components/Header'
 import PlayerList from './components/PlayerList'
+import Rosters from './components/Rosters'
 import RolePicker from './components/RolePicker'
 import { loadSession, saveSession } from './lib/session'
 import { useLiveState } from './lib/useLiveState'
@@ -48,6 +49,7 @@ export default function App() {
             auctionActive={!!state.auction.player}
           />
         </div>
+        <Rosters teams={state.teams} myTeamId={myTeam?.id} />
       </main>
     </div>
   )
