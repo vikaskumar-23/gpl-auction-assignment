@@ -4,6 +4,8 @@ Player auction for the IIT Goa Premier League. The auctioneer puts one player up
 
 FastAPI + SQLite backend, React + Vite + Tailwind frontend, live updates over Server-Sent Events.
 
+![Auction board, auctioneer view](docs/screenshots/board-desktop.png)
+
 ## Run
 
 Needs Python 3.11+ and Node 20.19+.
@@ -347,3 +349,13 @@ CREATE TABLE IF NOT EXISTS bids (
 | `voided` | INTEGER | | NOT NULL, 0 or 1. `1` marks bids from a rejected round, so they never count again |
 
 Rules that need more than one table (bid above the current highest, within the remaining budget) are checked in [`backend/app/auction.py`](backend/app/auction.py) inside a write transaction.
+
+## Screenshots
+
+| Manager on a phone | Bid over budget | Role picker |
+|---|---|---|
+| ![Manager view on a phone](docs/screenshots/board-phone.png) | ![Over-budget error on a phone](docs/screenshots/bid-error-phone.png) | ![Role picker on a phone](docs/screenshots/role-picker-phone.png) |
+
+Team rosters:
+
+![Team rosters](docs/screenshots/rosters.png)
