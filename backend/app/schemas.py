@@ -33,3 +33,12 @@ class Bid(BaseModel):
 class Auction(BaseModel):
     player: Player | None
     bids: list[Bid]  # highest first
+
+
+class StartRequest(BaseModel):
+    player_id: int
+
+
+class BidRequest(BaseModel):
+    team_id: int
+    amount: int = Field(gt=0)
