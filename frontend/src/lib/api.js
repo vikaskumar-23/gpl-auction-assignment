@@ -6,11 +6,16 @@ export class ApiError extends Error {
 }
 
 async function post(path, role, body) {
-  const res = await fetch(`/api${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Role': role },
-    body: body && JSON.stringify(body),
-  })
+  let res
+  try {
+    res = await fetch(`/api${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Role': role },
+      body: body && JSON.stringify(body),
+    })
+  } catch {
+    throw new ApiError("Can't reach the auction server. Check your connection and try again.", 'NETWORK')
+  }
   const data = await res.json().catch(() => null)
   if (!res.ok) throw new ApiError(data?.error?.message ?? `Request failed (${res.status}).`, data?.error?.code)
   return data

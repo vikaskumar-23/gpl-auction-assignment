@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from fastapi.staticfiles import StaticFiles
@@ -44,6 +45,14 @@ def error(status: int, code: str, message: str) -> JSONResponse:
 @app.exception_handler(AuctionError)
 async def on_auction_error(request: Request, exc: AuctionError):
     return error(exc.status, exc.code, exc.message)
+
+
+@app.exception_handler(RequestValidationError)
+async def on_validation_error(request: Request, exc: RequestValidationError):
+    first = exc.errors()[0]
+    # loc is like ("body", "amount")
+    field = ".".join(str(part) for part in first["loc"][1:]) or "body"
+    return error(422, "VALIDATION_ERROR", f"{field}: {first['msg']}")
 
 
 def require_role(role: str):
