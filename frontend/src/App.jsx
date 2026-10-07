@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AuctioneerPanel from './components/AuctioneerPanel'
 import AuctionStage from './components/AuctionStage'
 import Header from './components/Header'
 import PlayerList from './components/PlayerList'
@@ -33,10 +34,14 @@ export default function App() {
       {/* one column on phones and tablets; board + team sheets side by side on desktop */}
       <main className="mx-auto grid max-w-[1600px] items-start gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] lg:py-8">
         <div className="grid min-w-0 gap-5">
-          <AuctionStage auction={state.auction} />
+          <AuctionStage auction={state.auction}>
+            {session.role === 'auctioneer' && (
+              <AuctioneerPanel key={state.auction.player?.id ?? 'idle'} auction={state.auction} />
+            )}
+          </AuctionStage>
           <PlayerList
             players={state.players}
-            canStart={false}
+            canStart={session.role === 'auctioneer'}
             auctionActive={!!state.auction.player}
           />
         </div>
